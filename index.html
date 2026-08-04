@@ -1180,6 +1180,7 @@
     let num1 = 0;
     let num2 = 0;
     let correctResult = 0;
+    let isProcessingAnswer = false;
     let startTime = null;
     let timerInterval = null;
     let elapsedSeconds = 0;
@@ -1682,6 +1683,7 @@ if (progressFill && progressPercentText) {
       correctAnswers = 0;
       wrongAnswers = 0;
       elapsedSeconds = 0;
+      isProcessingAnswer = false;
       usedQuestionPairs.clear();
 
       document.getElementById("totalQuestionsText").innerText = toPersianNumber(totalQuestions);
@@ -1761,7 +1763,11 @@ function generateQuestion() {
   document.getElementById("questionText").innerText =
     toPersianNumber(num1) + " × " + toPersianNumber(num2) + " = ؟";
 
-  document.getElementById("answerInput").value = "";
+  const answerInput = document.getElementById("answerInput");
+answerInput.value = "";
+answerInput.disabled = false;
+isProcessingAnswer = false;
+
   document.getElementById("feedback").innerText = "";
   document.getElementById("feedback").className = "feedback";
 
@@ -1785,6 +1791,10 @@ function updateMissionProgress() {
 }
 
     function checkAnswer() {
+  if (isProcessingAnswer) {
+    return;
+  }
+
   const answerInput = document.getElementById("answerInput");
   const feedback = document.getElementById("feedback");
   const rawAnswer = answerInput.value.trim();
@@ -1799,15 +1809,20 @@ function updateMissionProgress() {
     return;
   }
 
+  isProcessingAnswer = true;
+  answerInput.disabled = true;
+
   answerInput.classList.remove("correct-flash", "wrong-flash");
   void answerInput.offsetWidth; // برای اجرای دوباره animation
 
-    if (userAnswer === correctResult) {
+  if (userAnswer === correctResult) {
     correctAnswers++;
     streak++;
-    if (streak > maxStreak) { // اضافه کردن این شرط
+
+    if (streak > maxStreak) {
       maxStreak = streak;
     }
+
     feedback.innerText = "آفرین! پاسخ درست بود.";
     feedback.className = "feedback correct";
     answerInput.classList.add("correct-flash");
@@ -1859,7 +1874,10 @@ function playNoRecordEffect() {
       clearInterval(timerInterval);
       updateTimer();
 
-      const scorePercent = Math.round((correctAnswers / totalQuestions) * 100);
+      const scorePercent = totalQuestions > 0
+  ? Math.min(100, Math.round((correctAnswers / totalQuestions) * 100))
+  : 0;
+
 const currentRecord = {
     name: studentName,
     percent: scorePercent,
